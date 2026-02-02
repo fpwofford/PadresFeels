@@ -252,10 +252,14 @@ def fetch_padres_news(max_articles=50):
                 title = entry.get('title', '')
                 # Only include if it mentions Padres or related keywords
                 if any(keyword in title.lower() for keyword in ['padres', 'san diego', 'petco park', 'machado', 'tatis', 'king', 'michael king']):
-                    # Parse the published date
+                    # Parse the published date - handle multiple formats
                     pub_date = entry.get('published_parsed', None)
                     if pub_date:
-                        date_str = datetime(*pub_date[:6]).strftime('%Y-%m-%d')
+                        try:
+                            # Convert time struct to simple date string
+                            date_str = f"{pub_date.tm_year}-{pub_date.tm_mon:02d}-{pub_date.tm_mday:02d}"
+                        except:
+                            date_str = datetime.now().strftime('%Y-%m-%d')
                     else:
                         date_str = datetime.now().strftime('%Y-%m-%d')
                     
@@ -363,6 +367,8 @@ def process_news_sentiment():
     
     # Save headlines to a separate file for display
     headlines_df = pd.DataFrame(headlines_with_sentiment)
+    # Ensure dates are simple strings
+    headlines_df['date'] = headlines_df['date'].astype(str)
     headlines_df.to_csv('padres_recent_headlines.csv', index=False)
     
     return current_sentiment
